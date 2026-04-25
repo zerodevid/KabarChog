@@ -806,7 +806,7 @@ const DemoView = ({ onConnect, isConnected, walletAddress }: { onConnect: () => 
           },
         };
         const x402Config = { chainId: "eip155:10143", facilitator: "https://x402-facilitator.molandak.org" } as const;
-        const client = new x402Client({ facilitator: x402Config.facilitator }).register(x402Config.chainId, new ExactEvmScheme(evmSigner));
+        const client = new x402Client().register(x402Config.chainId, new ExactEvmScheme(evmSigner));
         paymentFetch = wrapFetchWithPayment(fetch, client);
         setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] x402 fetch wrapper applied.`]);
       } else {
