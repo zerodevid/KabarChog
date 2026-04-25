@@ -66,6 +66,7 @@ export default function Home() {
   const { disconnect } = useDisconnect();
 
   const [events, setEvents] = useState<MarketEvent[]>([]);
+  const [tickers, setTickers] = useState<any[]>([]);
   const [currentView, setCurrentView] = useState('product');
   const [unlockStatus, setUnlockStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("Pay $0.001 USDC to unlock premium content");
@@ -95,7 +96,17 @@ export default function Home() {
         console.error("Failed to fetch events", err);
       }
     }
+    async function fetchTickers() {
+      try {
+        const res = await fetch("/api/tickers");
+        const data = await res.json();
+        if (Array.isArray(data)) setTickers(data);
+      } catch (err) {
+        console.error("Failed to fetch tickers", err);
+      }
+    }
     fetchEvents();
+    fetchTickers();
   }, []);
 
   const handleUnlock = useCallback(async () => {
@@ -164,8 +175,21 @@ export default function Home() {
                 <div className="flex animate-marquee whitespace-nowrap gap-12 items-center w-max">
                     {[...Array(2)].map((_, i) => (
                     <div key={i} className="flex gap-12 items-center">
-                        <span className="flex items-center gap-2 font-mono text-sm"><span className="bg-tertiary/10 text-tertiary px-2 py-0.5 rounded text-[10px] font-bold">BULLISH</span> BTC +4.2%</span>
-                        <span className="flex items-center gap-2 font-mono text-sm"><span className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold">BEARISH</span> SOL -1.8%</span>
+                        {tickers.length > 0 ? tickers.map((t, idx) => (
+                            <span key={idx} className="flex items-center gap-2 font-mono text-sm">
+                                <span className={`${t.sentiment === 'BULLISH' ? 'bg-tertiary/10 text-tertiary' : 'bg-red-500/10 text-red-400'} px-2 py-0.5 rounded text-[10px] font-bold`}>
+                                    {t.sentiment}
+                                </span> 
+                                {t.symbol} {t.change}
+                            </span>
+                        )) : (
+                            <>
+                                <span className="flex items-center gap-2 font-mono text-sm"><span className="bg-tertiary/10 text-tertiary px-2 py-0.5 rounded text-[10px] font-bold">BULLISH</span> BTC +4.2%</span>
+                                <span className="flex items-center gap-2 font-mono text-sm"><span className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold">BEARISH</span> SOL -1.8%</span>
+                                <span className="flex items-center gap-2 font-mono text-sm"><span className="bg-tertiary/10 text-tertiary px-2 py-0.5 rounded text-[10px] font-bold">BULLISH</span> ETH +2.1%</span>
+                                <span className="flex items-center gap-2 font-mono text-sm"><span className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold">BEARISH</span> ARB -0.4%</span>
+                            </>
+                        )}
                     </div>
                     ))}
                 </div>
@@ -180,7 +204,7 @@ export default function Home() {
                     <Button onClick={handleWalletAction} className="px-8 py-4 text-base"><Wallet className="w-5 h-5" /> {isConnected ? "Connected" : "Connect Wallet"}</Button>
                     <Button onClick={() => scrollToSection('demo')} variant="secondary" className="px-8 py-4 text-base"><Terminal className="w-5 h-5" /> View Live Feed</Button>
                 </div>
-                <IntelligencePanel />
+                <IntelligencePanel event={events[0]} />
               </section>
 
               <section id="demo" className="py-32 px-6 max-w-7xl mx-auto text-center">

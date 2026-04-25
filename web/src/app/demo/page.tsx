@@ -79,7 +79,7 @@ export default function DemoPage() {
 
   const [selectedApi, setSelectedApi] = useState(ENDPOINTS[0]);
   const [params, setParams] = useState<Record<string, string>>({ symbol: "BTC", limit: "10", id: "", text: "" });
-  const [tickers, setTickers] = useState<string[]>([]);
+  const [tickers, setTickers] = useState<any[]>([]);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +93,7 @@ export default function DemoPage() {
         if (Array.isArray(data)) {
           setTickers(data);
           if (data.length > 0 && !params.symbol) {
-            setParams(p => ({ ...p, symbol: data[0] }));
+            setParams(p => ({ ...p, symbol: data[0].symbol }));
           }
         }
       } catch (err) {
@@ -280,7 +280,7 @@ export default function DemoPage() {
                           className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-sm focus:border-indigo-500 outline-none appearance-none cursor-pointer"
                         >
                           {tickers.map(t => (
-                            <option key={t} value={t}>{t}</option>
+                            <option key={t.symbol} value={t.symbol}>{t.symbol} ({t.name})</option>
                           ))}
                           {tickers.length === 0 && <option disabled>Loading assets...</option>}
                         </select>

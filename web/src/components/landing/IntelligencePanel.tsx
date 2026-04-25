@@ -4,10 +4,29 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Zap, ArrowRight } from 'lucide-react';
 
-export const IntelligencePanel = () => {
+interface MarketEvent {
+  id: string;
+  headline: string;
+  summary: string;
+  sentiment: string;
+  confidence: number;
+  impact_assets: any;
+  event_time: string;
+  channel_handle: string;
+  categories?: string[];
+  raw_text?: string;
+}
+
+export const IntelligencePanel = ({ event }: { event?: MarketEvent }) => {
   const [activeTab, setActiveTab] = useState<'raw' | 'summary' | 'insight'>('summary');
   
-  const rawData = `{
+  const rawData = event ? JSON.stringify({
+    id: event.id,
+    source: event.channel_handle,
+    headline: event.headline,
+    timestamp: event.event_time,
+    raw_content: (event as any).raw_text || event.summary
+  }, null, 2) : `{
   "id": "kb_9210x",
   "source": "market_feed_live",
   "raw_headline": "Sentiment shift detected in crypto majors",
@@ -15,14 +34,24 @@ export const IntelligencePanel = () => {
   "raw_content": "Volume spikes correlate with social sentiment flip..."
 }`;
 
-  const summaryData = {
+  const summaryData = event ? {
+    headline: event.headline,
+    summary: event.summary,
+    confidence: Math.round(event.confidence * 100),
+    detected_signals: (event as any).categories?.slice(0, 3) || ["Momentum", "Signal"]
+  } : {
     headline: "Sentiment shift detected in crypto majors",
     summary: "High volume and social momentum signal a potential breakout in the next 4-8 hours.",
     confidence: 92,
     detected_signals: ["Momentum", "Social", "Volume"]
   };
 
-  const insightData = {
+  const insightData = event ? {
+    marketImpact: event.sentiment.charAt(0).toUpperCase() + event.sentiment.slice(1).toLowerCase(),
+    affectedAssets: Array.isArray(event.impact_assets) ? event.impact_assets.slice(0, 3).map((a: any) => a.ticker || a.asset) : ["BTC", "ETH", "SOL"],
+    suggestion: event.sentiment.toLowerCase() === 'bullish' ? "Maintain long bias / Watch for entry" : "Reduce risk / Increase cash position",
+    timeFrame: "Short-term (4-12 hours)"
+  } : {
     marketImpact: "Bullish",
     affectedAssets: ["BTC", "ETH", "SOL"],
     suggestion: "Maintain long bias / Watch for $100k breakout",
@@ -101,7 +130,7 @@ export const IntelligencePanel = () => {
                   </div>
 
                   <div className="flex gap-4">
-                    {summaryData.detected_signals.map(signal => (
+                    {summaryData.detected_signals.map((signal: string) => (
                       <span key={signal} className="px-3 py-1 bg-white/5 border border-white/10 rounded-md text-[10px] text-on-surface-variant">
                         #{signal}
                       </span>
