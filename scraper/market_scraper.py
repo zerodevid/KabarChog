@@ -155,10 +155,10 @@ async def process_sync_message(message, chat_handle):
         # Small delay to prevent hitting rate limits too hard
         await asyncio.sleep(0.5)
 
-async def sync_history(channel, display_name, days=1):
-    print(f"[*] Syncing last {days} days from {display_name}...")
+async def sync_history(channel, display_name, hours=3):
+    print(f"[*] Syncing last {hours} hours from {display_name}...")
     try:
-        limit_date = datetime.now() - timedelta(days=days)
+        limit_date = datetime.now() - timedelta(hours=hours)
         
         tasks = []
         async for message in client.iter_messages(channel, offset_date=limit_date, reverse=True):
@@ -217,7 +217,7 @@ async def main():
         # Tentukan nama tampilan
         name = getattr(entity, 'username', None)
         display_name = f"@{name}" if name else getattr(entity, 'title', str(entity.id))
-        sync_tasks.append(sync_history(entity, display_name, days=2))
+        sync_tasks.append(sync_history(entity, display_name, hours=3))
     
     if sync_tasks:
         await asyncio.gather(*sync_tasks)
