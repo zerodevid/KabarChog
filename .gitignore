@@ -1,0 +1,83 @@
+# Dependencies
+node_modules/
+**/node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js
+.next/
+**/.next/
+/out/
+next-env.d.ts
+
+# Production / Build
+/build
+dist/
+**/dist/
+
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+venv/
+**/venv/
+ENV/
+env/
+.env
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Telegram Session Files (Credentials)
+*.session
+*.session-journal
+**/scraper/*.session
+**/scraper/*.session-journal
+
+# Environment Files (Sensitive)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project Specific
+KabarChog-main/
+screenshots/
+data/
+*.log
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+.vercel
+.turbo
