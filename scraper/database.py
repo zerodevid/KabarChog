@@ -19,6 +19,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS assets (
             ticker VARCHAR(20) PRIMARY KEY,
             name VARCHAR(100),
+            coingecko_id VARCHAR(100),
             is_active BOOLEAN DEFAULT TRUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -46,8 +47,14 @@ def init_db():
     # Insert some default tickers if empty
     cur.execute("SELECT COUNT(*) FROM assets")
     if cur.fetchone()[0] == 0:
-        tickers = [('BTC', 'Bitcoin'), ('ETH', 'Ethereum'), ('SOL', 'Solana'), ('MONAD', 'Monad')]
-        cur.executemany("INSERT INTO assets (ticker, name) VALUES (%s, %s)", tickers)
+        tickers = [
+            ('BTC', 'Bitcoin', 'bitcoin'), 
+            ('ETH', 'Ethereum', 'ethereum'), 
+            ('SOL', 'Solana', 'solana'), 
+            ('MON', 'Monad', 'monad'),
+            ('MONAD', 'Monad', 'monad')
+        ]
+        cur.executemany("INSERT INTO assets (ticker, name, coingecko_id) VALUES (%s, %s, %s)", tickers)
     
     conn.commit()
     cur.close()

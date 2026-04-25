@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withX402, server, createRouteConfig } from "@/lib/x402";
-import { analyzeText, SYMBOL_MAP } from "@/lib/ai";
+import { analyzeText } from "@/lib/ai";
 import { query } from "@/lib/db";
 
 // Keywords that indicate the text is market/finance related
@@ -51,14 +51,18 @@ async function handler(request: NextRequest): Promise<NextResponse> {
                 );
             }
 
-            // 2. Try to fetch live prices for mentioned tickers
-            const mentionedTickers = extractTickers(text, Object.keys(SYMBOL_MAP));
+            // 2. Fetch live price context if tickers are mentioned
+            const assetRes = await query('SELECT ticker, coingecko_id FROM assets WHERE is_active = TRUE');
+            const mappings: Record<string, string> = {};
+            assetRes.rows.forEach(r => { if (r.coingecko_id) mappings[r.ticker] = r.coingecko_id; });
+
+            const mentionedTickers = extractTickers(text, Object.keys(mappings));
             let prices: any = null;
 
             if (mentionedTickers.length > 0) {
                 try {
                     const cgIds = mentionedTickers
-                        .map(t => SYMBOL_MAP[t])
+                        .map(t => mappings[t])
                         .filter(Boolean)
                         .join(',');
 

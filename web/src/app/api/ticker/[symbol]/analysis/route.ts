@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { withX402, server, createRouteConfig } from "@/lib/x402";
-import { SYMBOL_MAP, generateTradingPlan } from "@/lib/ai";
+import { generateTradingPlan } from "@/lib/ai";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
     const ticker = request.nextUrl.pathname.split('/').slice(-2, -1)[0]?.toUpperCase();
     if (!ticker) return NextResponse.json({ error: "Ticker required" }, { status: 400 });
 
-    const cgId = SYMBOL_MAP[ticker];
-    if (!cgId) return NextResponse.json({ error: `Ticker ${ticker} not mapped` }, { status: 400 });
+    const assetRes = await query('SELECT coingecko_id FROM assets WHERE ticker = $1', [ticker]);
+    const cgId = assetRes.rows[0]?.coingecko_id;
+    if (!cgId) return NextResponse.json({ error: `Ticker ${ticker} not mapped in database` }, { status: 400 });
 
     try {
         // 1. Fetch DB Intelligence (Free Pre-check)

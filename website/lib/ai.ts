@@ -1,7 +1,12 @@
 const API_KEY = process.env.AI_API_KEY;
 const API_URL = process.env.AI_BASE_URL;
 
-
+export const SYMBOL_MAP: Record<string, string> = {
+  'BTC': 'bitcoin',
+  'ETH': 'ethereum',
+  'SOL': 'solana',
+  'MONAD': 'monad', // Placeholder if exists
+};
 
 const SYSTEM_PROMPT = `You are a professional crypto market analyst. 
 Analyze the provided information and determine its market impact.
