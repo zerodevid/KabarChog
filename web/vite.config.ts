@@ -16,11 +16,13 @@ export default defineConfig(({mode}) => {
       },
     },
     server: {
+      allowedHosts: ['kabarchog.zerodev.my.id'],
       hmr: process.env.DISABLE_HMR !== 'true',
       proxy: {
         '/api': {
           target: 'http://localhost:3001',
           changeOrigin: true,
+          xfwd: true,
         },
       },
     },

@@ -6,6 +6,7 @@ import { server, MONAD_NETWORK, createPaymentRequirements, PAY_TO } from './lib/
 import { x402HTTPResourceServer } from '@x402/core/server';
 
 const app = express();
+app.set('trust proxy', true);
 app.use(express.json());
 
 // ============================================================
@@ -62,7 +63,11 @@ class ExpressAdapter {
   getHeader(name: string) { return this.req.headers[name.toLowerCase()] as string | undefined; }
   getMethod() { return this.req.method; }
   getPath() { return this.req.path; }
-  getUrl() { return `${this.req.protocol}://${this.req.get('host')}${this.req.originalUrl}`; }
+  getUrl() { 
+    const protocol = this.req.headers['x-forwarded-proto'] as string || this.req.protocol;
+    const host = this.req.headers['x-forwarded-host'] as string || this.req.get('host');
+    return `${protocol}://${host}${this.req.originalUrl}`; 
+  }
   getAcceptHeader() { return this.req.headers['accept'] || ''; }
   getUserAgent() { return this.req.headers['user-agent'] || ''; }
   getQueryParams() { return this.req.query as Record<string, string>; }
@@ -102,12 +107,20 @@ async function x402Middleware(req: express.Request, res: express.Response, next:
         const headers = result.response.headers || {};
         Object.entries(headers).forEach(([key, value]) => {
           res.setHeader(key, value as string);
+          // Duplicate as X-Payment-Requirements for older client support
+          if (key.toLowerCase() === 'payment-required') {
+             res.setHeader('X-Payment-Requirements', value as string);
+          }
         });
+        // Expose headers for cross-origin or proxied requests
+        res.setHeader('Access-Control-Expose-Headers', 'Payment-Required, X-Payment-Requirements, Payment-Signature, X-Payment');
+        
         res.status(result.response.status);
         if (result.response.isHtml) {
           return res.send(result.response.body);
         }
-        return res.json(result.response.body || {});
+        // Return body which might contain requirements as well
+        return res.json(result.response.body || { error: 'Payment Required' });
       }
 
       case 'payment-verified':

@@ -766,13 +766,16 @@ const DemoView = ({ onConnect, isConnected, walletAddress }: { onConnect: () => 
 
     try {
       // Build real API URL from endpoint config
-      let url = selectedEndpoint.path;
-      if (url.includes('{symbol}')) {
-        url = url.replace('{symbol}', inputs.selectedAsset || 'BTC');
+      let urlPath = selectedEndpoint.path;
+      if (urlPath.includes('{symbol}')) {
+        urlPath = urlPath.replace('{symbol}', inputs.selectedAsset || 'BTC');
       }
       if (selectedEndpoint.params?.includes('limit') && inputs.limit) {
-        url += `?limit=${inputs.limit}`;
+        urlPath += `?limit=${inputs.limit}`;
       }
+
+      // Use absolute URL to ensure consistent matching in x402 library
+      const url = new URL(urlPath, window.location.origin).href;
 
       setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Requesting: ${url}`, `[${new Date().toLocaleTimeString()}] x402 Settlement: ${selectedEndpoint.price}`]);
 
@@ -788,9 +791,11 @@ const DemoView = ({ onConnect, isConnected, walletAddress }: { onConnect: () => 
 
       // Only apply payment wrapper if real wallet client is accessible
       if (walletClient && walletAddress) {
+        setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Wallet ready, initializing x402 Client...`]);
         const evmSigner = {
           address: walletAddress as `0x${string}`,
           signTypedData: async (data: any) => {
+            setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ✍️ Requesting signature from wallet...`]);
             return walletClient.signTypedData({
               account: walletAddress as `0x${string}`,
               domain: data.domain,
@@ -801,19 +806,22 @@ const DemoView = ({ onConnect, isConnected, walletAddress }: { onConnect: () => 
           },
         };
         const x402Config = { chainId: "eip155:10143", facilitator: "https://x402-facilitator.molandak.org" } as const;
-        const client = new x402Client().register(x402Config.chainId, new ExactEvmScheme(evmSigner));
+        const client = new x402Client({ facilitator: x402Config.facilitator }).register(x402Config.chainId, new ExactEvmScheme(evmSigner));
         paymentFetch = wrapFetchWithPayment(fetch, client);
+        setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] x402 fetch wrapper applied.`]);
       } else {
-        setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] WARNING: No real wallet connected for payment signing. Using raw fetch.`]);
+        const reason = !walletClient ? "walletClient is null" : "walletAddress is null";
+        setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ⚠️ WARNING: ${reason}. Using raw fetch (payment will fail).`]);
       }
 
       const res = await paymentFetch(url, options);
-      const data = await res.json();
-
+      
       if (!res.ok) {
-        throw new Error(data.error || `HTTP ${res.status}`);
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${res.status}`);
       }
 
+      const data = await res.json();
       setResponse(data);
       const payloadSize = new Blob([JSON.stringify(data)]).size;
       setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Data stream established.`, `[${new Date().toLocaleTimeString()}] Received payload: ${(payloadSize / 1024).toFixed(1)}kb`]);
@@ -922,7 +930,7 @@ const DemoView = ({ onConnect, isConnected, walletAddress }: { onConnect: () => 
             <div className="text-left">
               <div className="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest leading-none mb-1">NETWORK</div>
               <div className="text-white font-mono text-xs flex items-center gap-2 uppercase">
-                <Box className="w-3 h-3 text-secondary" /> Monad Mainnet
+                <Box className="w-3 h-3 text-secondary" /> Monad Testnet
               </div>
             </div>
             <div className="h-8 w-px bg-white/10" />
